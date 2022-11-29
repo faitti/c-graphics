@@ -34,6 +34,18 @@ set_pixel_color(COLOR *pixels, uint x, uint y, COLOR color)
         pixels[y * WIDTH + x] = color;
 }
 
+void
+write_error(char *msg)
+{
+    printf("[\033[;31mERROR\033[0m] %s\n", msg);
+}
+
+void
+write_success(char *msg)
+{
+    printf("[\033[;32mSUCCESS\033[0m] %s\n", msg);
+}
+
 int
 write_ppm_file(COLOR *pixels, char *filename)
 {
@@ -68,33 +80,63 @@ char *
 parse_filename(int argc, char **argv)
 {
     char *filename = "output.ppm";
-    
-    if (argc > 1)
-        filename = strncat(argv[argc - 1], ".ppm", 5);
 
+    if (argc > 1) {
+        filename = strncat(argv[argc - 1], ".ppm", 5);
+        if (argc == 2)
+            goto ret;
+    } else {
+        filename = "output.ppm";
+        goto ret;
+    }
+
+    if (strncmp(argv[argc - 2], "-e", 3) == 0) {
+        char *example_filename = (char *) malloc(512 * sizeof(char));
+        strncpy(example_filename, "examples/", 10);
+        filename = strncat(example_filename, filename, strlen(filename) + 1);
+        goto ret;
+    }
+
+ret:
     return filename;
 }
 
 void
-write_error(char *msg)
+checkers()
 {
-    printf("[\033[;31mERROR\033[0m] %s", msg);
-}
+    COLOR black = { .r = 0, .g = 0, .b = 0 };
+    COLOR white = { .r = 255, .g = 255, .b = 255 };
 
-void
-write_success(char *msg)
-{
-    printf("[\033[;32mSUCCESS\033[0m] %s", msg);
+    uint checker_w = WIDTH / 8;
+    uint checker_h = HEIGHT / 6;
+    int checker_idx = 0;
+
+    int swap[] = {1, 0};
+    COLOR lookup[] = {black, white};
+
+    for (uint y = 0; y < HEIGHT; ++y) {
+        for (uint x = 0; x < WIDTH; ++x) {
+            if ((x % checker_w) == 0) {
+                checker_idx = swap[checker_idx];
+            }
+            set_pixel_color(*pixels, x, y, lookup[checker_idx]);
+        }
+        if (y != 0 && (y % checker_h) == 0) {
+            checker_idx = swap[checker_idx];
+        } else if (checker_h % 2 != 0) {
+            checker_idx = 1;
+        }
+    }
 }
 
 int 
 main(int argc, char **argv) 
 {
     char *filename = parse_filename(argc, argv);
+    write_success(filename);
 
-    fill_with_color(*pixels, RED);
-    set_pixel_color(*pixels, 400, 300, GREEN);
-    
+    checkers();
+
     if (write_ppm_file(*pixels, filename) == -1) {
         write_error("Failed to write file!");
         return 1;
