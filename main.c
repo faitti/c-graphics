@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define WIDTH 800
-#define HEIGHT 600
+#include <math.h>
+
+#define WIDTH 1200
+#define HEIGHT 1200
 
 typedef unsigned int uint;
 
@@ -102,13 +104,13 @@ ret:
 }
 
 void
-checkers()
+_checkers()
 {
     COLOR black = { .r = 0, .g = 0, .b = 0 };
     COLOR white = { .r = 255, .g = 255, .b = 255 };
 
-    uint checker_w = WIDTH / 8;
-    uint checker_h = HEIGHT / 6;
+    uint checker_w = 10;
+    uint checker_h = 10;
     int checker_idx = 0;
 
     int swap[] = {1, 0};
@@ -129,13 +131,31 @@ checkers()
     }
 }
 
+void
+_sphere()
+{
+    int center_x = 500;
+    int center_y = 500;
+    int radius = 120;
+
+    for (uint y = 0; y < HEIGHT; ++y) {
+        for (uint x = 0; x < WIDTH; ++x) {
+            if ((int) sqrt((x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) < radius) {
+                set_pixel_color(*pixels, x, y, RED);
+            } else {
+                set_pixel_color(*pixels, x, y, GREEN);
+            }
+        }
+    }
+}
+
 int 
 main(int argc, char **argv) 
 {
     char *filename = parse_filename(argc, argv);
     write_success(filename);
 
-    checkers();
+    _sphere();
 
     if (write_ppm_file(*pixels, filename) == -1) {
         write_error("Failed to write file!");
